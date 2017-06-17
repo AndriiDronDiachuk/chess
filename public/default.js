@@ -2,11 +2,11 @@
 
     WinJS.UI.processAll().then(function () {
 
-        var socket, serverGame;
-        var username, playerColor;
-        var game, board;
-        var usersOnline = [];
-        var myGames = [];
+        let socket, serverGame;
+        let username, playerColor;
+        let game, board;
+        let usersOnline = [];
+        let myGames = [];
         socket = io();
 
         socket.on('login', function (msg) {
@@ -30,9 +30,7 @@
 
         socket.on('resign', function (msg) {
             if (msg.gameId == serverGame.id) {
-
                 socket.emit('login', username);
-
                 $('#page-lobby').show();
                 $('#page-game').hide();
             }
@@ -42,10 +40,8 @@
             console.log("joined as game id: " + msg.game.id);
             playerColor = msg.color;
             initGame(msg.game);
-
             $('#page-lobby').hide();
             $('#page-game').show();
-
         });
 
         socket.on('move', function (msg) {
@@ -61,19 +57,32 @@
 
         $('#login').on('click', function () {
             username = $('#username').val();
-
+            $('#1radio').attr('checked', 'checked');
             if (username.length > 0) {
                 $('#userLabel').text(username);
-                socket.emit('login', username);
-
                 $('#page-login').hide();
                 $('#page-lobby').show();
             }
         });
+        $('#play').on('click',function () {
+            let username = $('#username').val();
+            let usercolor = $('input[type=radio]:checked').val();
+            if(usercolor==='black'){
+                username = username + ' -Ч';
+            }
+            else{
+                username = username + ' -Б';
+            }
+            $('input[type=radio]').attr('disabled', true);
+            $('#play').attr('value', 'Вы в очереди');
+            $('#play').attr('disabled', true);
+            socket.emit('login', username);
+        });
 
         $('#game-back').on('click', function () {
             socket.emit('login', username);
-
+            $('#play').attr('value', 'Вернуться в игру');
+            $('#play').attr('disabled', false);
             $('#page-game').hide();
             $('#page-lobby').show();
         });
@@ -165,6 +174,10 @@
         var onSnapEnd = function () {
             board.position(game.fen());
         };
+
+        socket.on('colorErr',function () {
+            alert("Этот игрок выбрал ваш цвет! Виберите другого игрока");
+        })
     });
 })();
 
