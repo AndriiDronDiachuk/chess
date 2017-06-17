@@ -1,0 +1,23 @@
+{
+  "name": "chess",
+  "version": "1.0.0",
+  "description": "Real-time chess game",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndriiDronDiachuk/chess.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AndriiDronDiachuk/chess/issues"
+  },
+  "homepage": "https://github.com/AndriiDronDiachuk/chess#readme",
+  "dependencies": {
+    "express": "^4.15.3",
+    "socket.io": "^1.3.5"
+  }
+}
