@@ -35,6 +35,7 @@
                 $('input[type=radio]').attr('disabled', false);
                 $('#page-lobby').show();
                 $('#userList').hide();
+                clearGamesList();
             }
         });
 
@@ -84,9 +85,16 @@
         });
 
         $('#game-back').on('click', function () {
+            let username = $('#username').val();
+            let usercolor = $('input[type=radio]:checked').val();
+            if(usercolor==='black'){
+                username = username + ' -Ч';
+            }
+            else{
+                username = username + ' -Б';
+            }
             socket.emit('login', username);
             $('#play').attr('value', 'Вернуться в игру');
-            $('#play').attr('disabled', false);
             $('#page-game').hide();
             $('#page-lobby').show();
         });
@@ -99,6 +107,7 @@
             $('input[type=radio]').attr('disabled', false);
             $('#page-lobby').show();
             $('#userList').hide();
+            clearGamesList();
         });
 
         let addUser = function (userId) {
@@ -113,6 +122,10 @@
                 }
             }
             updateUserList();
+        };
+
+        let clearGamesList = function () {
+            document.getElementById('gamesList').innerHTML = '';
         };
 
         let updateGamesList = function () {
