@@ -19,11 +19,6 @@ http.listen(2000, function () {
     console.log('Server started on port 2000.');
 });
 
-app.get('/dashboard/', function (req, res) {
-    console.log('get method "dashboard"');
-    res.sendFile(__dirname + '/dashboard/dashboard.html');
-});
-
 io.on('connection', function (socket) {
     console.log('new connection ' + socket);
 
@@ -154,11 +149,6 @@ io.on('connection', function (socket) {
             userId: socket.userId,
             gameId: socket.gameId
         });
-    });
-
-    socket.on('dashboardlogin', function () {
-        console.log('dashboard joined');
-        socket.emit('dashboardlogin', {games: activeGames});
     });
 });
 

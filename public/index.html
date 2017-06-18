@@ -1,28 +1,35 @@
 <!doctype html>
 <html>
 <head>
-    <meta name="viewport" content="width=410; user-scalable=no; minimal-ui">
+    <meta charset="UTF-8">
     <title>Chess</title>
     <link rel="stylesheet" href="lib/chessboard-0.3.0.min.css">
-    <link rel="stylesheet" href="lib/WinJS.4.0/css/ui-light.css"/>
-    <link rel="stylesheet" href="/default.css"/>
+    <link rel="stylesheet" href="default.css">
 </head>
 <body>
 <div class="page login" id='page-login'>
-    <div class='logo'></div>
-    <input id='username'></input>
+    <input id='username'/>
     <button id='login'>Войти</button>
 </div>
-<div class="page lobby" id='page-lobby'>
     <h2 id='userLabel'></h2>
-    <h3>Игра</h3>
-    <p>Выберите сторону и нажмите "Играть":</p>
-    <div><h4><input type="radio" name="radio" value="black" id="1radio">Черные</input></h4></div>
-    <div><h4><input type="radio" name="radio" value="white" id="2radio">Белые</input></h4></div>
-    <div><input type="button" value="Играть" id="play"/></div>
-    <div id='gamesList'></div>
-    <h3>Игроки онлайн</h3>
-    <div id='userList'></div>
+<div id="page-main">
+    <div class="part-of-page-main" id='statistics'>
+        <br></dr>
+        <h3>Статистика</h3>
+        //Ждет подключения к БД
+    </div>
+    <div class="part-of-page-main" id="game">
+        <div class="page lobby" id='page-lobby'>
+            <h3>Игра</h3>
+            <p>Выберите сторону и нажмите "Играть":</p>
+            <div><h4><input type="radio" name="radio" value="black" id="1radio"/>Черные</h4></div>
+            <div><h4><input type="radio" name="radio" value="white" id="2radio"/>Белые</h4></div>
+            <div><input type="button" value="Играть" id="play"/></div>
+            <div id='gamesList'></div>
+            <h3>Игроки онлайн</h3>
+            <div id='userList'></div>
+        </div>
+    </div>
 </div>
 <div class="page game" id='page-game'>
     <button id='game-back'>На главную страницу</button>
@@ -30,10 +37,8 @@
     <div id='game-board' style="width: 400px">
     </div>
 </div>
-
 <script src="lib/socket.io-1.2.0.js"></script>
 <script src="lib/jquery-1.11.1.js"></script>
-<script src="lib/WinJS.4.0/js/WinJS.min.js"></script>
 <script src="lib/chess.min.js"></script>
 <script src="lib/chessboard-0.3.0.min.js"></script>
 <script src="default.js"></script>
