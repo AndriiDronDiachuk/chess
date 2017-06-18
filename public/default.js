@@ -12,7 +12,6 @@
         socket.on('login', function (msg) {
             usersOnline = msg.users;
             updateUserList();
-
             myGames = msg.games;
             updateGamesList();
         });
@@ -30,9 +29,12 @@
 
         socket.on('resign', function (msg) {
             if (msg.gameId == serverGame.id) {
-                socket.emit('login', username);
-                $('#page-lobby').show();
+                $('#play').attr('disabled', false);
+                $('#play').attr('value', 'Играть');
                 $('#page-game').hide();
+                $('input[type=radio]').attr('disabled', false);
+                $('#page-lobby').show();
+                $('#userList').hide();
             }
         });
 
@@ -76,6 +78,8 @@
             $('input[type=radio]').attr('disabled', true);
             $('#play').attr('value', 'Вы в очереди');
             $('#play').attr('disabled', true);
+            $('#page-lobby').show();
+            $('#userList').show();
             socket.emit('login', username);
         });
 
@@ -89,18 +93,21 @@
 
         $('#game-resign').on('click', function () {
             socket.emit('resign', {userId: username, gameId: serverGame.id});
-            socket.emit('login', username);
+            $('#play').attr('disabled', false);
+            $('#play').attr('value', 'Играть');
             $('#page-game').hide();
+            $('input[type=radio]').attr('disabled', false);
             $('#page-lobby').show();
+            $('#userList').hide();
         });
 
-        var addUser = function (userId) {
+        let addUser = function (userId) {
             usersOnline.push(userId);
             updateUserList();
         };
 
-        var removeUser = function (userId) {
-            for (var i = 0; i < usersOnline.length; i++) {
+        let removeUser = function (userId) {
+            for (let i = 0; i < usersOnline.length; i++) {
                 if (usersOnline[i] === userId) {
                     usersOnline.splice(i, 1);
                 }
@@ -108,7 +115,7 @@
             updateUserList();
         };
 
-        var updateGamesList = function () {
+        let updateGamesList = function () {
             document.getElementById('gamesList').innerHTML = '';
             myGames.forEach(function (game) {
                 $('#gamesList').append($('<button>')
@@ -119,7 +126,7 @@
             });
         };
 
-        var updateUserList = function () {
+        let updateUserList = function () {
             document.getElementById('userList').innerHTML = '';
             usersOnline.forEach(function (user) {
                 $('#userList').append($('<button>')
@@ -130,10 +137,10 @@
             });
         };
 
-        var initGame = function (serverGameState) {
+        let initGame = function (serverGameState) {
             serverGame = serverGameState;
 
-            var cfg = {
+            let cfg = {
                 draggable: true,
                 showNotation: false,
                 orientation: playerColor,
@@ -145,9 +152,9 @@
 
             game = serverGame.board ? new Chess(serverGame.board) : new Chess();
             board = new ChessBoard('game-board', cfg);
-        }
+        };
 
-        var onDragStart = function (source, piece, position, orientation) {
+        let onDragStart = function (source, piece, position, orientation) {
             if (game.game_over() === true ||
                 (game.turn() === 'w' && piece.search(/^b/) !== -1) ||
                 (game.turn() === 'b' && piece.search(/^w/) !== -1) ||
@@ -157,8 +164,8 @@
         };
 
 
-        var onDrop = function (source, target) {
-            var move = game.move({
+        let onDrop = function (source, target) {
+            let move = game.move({
                 from: source,
                 to: target,
                 promotion: 'q'
@@ -171,7 +178,7 @@
             }
         };
 
-        var onSnapEnd = function () {
+        let onSnapEnd = function () {
             board.position(game.fen());
         };
 
