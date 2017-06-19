@@ -31,11 +31,21 @@
     </div>
 </div>
 <div class="page game" id='page-game'>
-    <button id='game-back'>На главную страницу</button>
-    <button id='game-resign'>Сдаться</button>
-    <div id='game-board' style="width: 400px"></div>
+    <div id="chess-board">
+        <button id='game-back'>На главную страницу</button>
+        <button id='game-resign'>Сдаться</button>
+        <div id='game-board' style="width: 400px"></div>
+    </div>
     <div id="logs">
-        <p>Веремя &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp | Цвет | Фигура | Координаты хода | Действие</p>
+        <table>
+            <tr>
+                <th class="wide-th">Веремя</th>
+                <th class="just-th">Цвет</th>
+                <th class="just-th">Фигура</th>
+                <th class="just-th">Координаты хода</th>
+                <th class="wide-th">Действие</th>
+            </tr>
+        </table>
     </div>
 </div>
 <script src="lib/socket.io-1.2.0.js"></script>

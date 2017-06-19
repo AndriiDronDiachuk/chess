@@ -35,7 +35,6 @@ body {
     display: none;
 }
 
-/*//display: inline;*/
 .part-of-page-main {
     display: inline-block;
     border-style: hidden;
@@ -64,11 +63,23 @@ body {
     border: 1px solid gray;
     padding: 5px 10px;
     border-radius: 5px;
-    width: 95% !important;
+    width: 100%;
     background-color: #efefef;
 }
 
-/*
-#tab{
-    text-indent: 2em;
-}*/
+.wide-th{
+    width: 150pt;
+}
+
+.just-th{
+    width: 100pt;
+}
+
+#chess-board{
+    position: relative;
+    left: 26%;
+}
+
+#logs{
+    text-align: left;
+}

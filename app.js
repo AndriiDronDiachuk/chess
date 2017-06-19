@@ -22,14 +22,12 @@ http.listen(2000, function () {
 io.on('connection', function (socket) {
     console.log('new connection ' + socket);
 
-    socket.on('login', function (userId, usercolor) {
-        console.log(usercolor);
-        doLogin(socket, userId, usercolor);
+    socket.on('login', function (userId) {
+        doLogin(socket, userId);
     });
 
-    function doLogin(socket, userId, usercolor) {
+    function doLogin(socket, userId) {
         socket.userId = userId;
-        socket.userColor = usercolor;
 
         if (!users[userId]) {
             console.log('creating new user');
@@ -119,8 +117,8 @@ io.on('connection', function (socket) {
 
     socket.on('move', function (msg) {
         activeGames[msg.gameId].board = msg.board;
-        socket.broadcast.emit('move', msg);
         console.log(msg);
+        socket.broadcast.emit('move', msg);
     });
 
     socket.on('resign', function (msg) {

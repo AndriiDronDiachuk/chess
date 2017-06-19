@@ -56,8 +56,6 @@
         }
     });
 
-
-
     socket.on('logout', function (msg) {
         removeUser(msg.username);
     });
@@ -98,15 +96,15 @@
         else {
             username = username + ' -Б';
         }
-        socket.emit('login', username);
         $('#play').attr('value', 'Вернуться в игру');
         $('#page-game').hide();
         $('#page-lobby').show();
         $('#page-main').show();
+        socket.emit('login', username);
     });
 
     $('#game-resign').on('click', function () {
-        socket.emit('resign', {userId: username, gameId: serverGame.id});
+
         $('#play').attr('disabled', false);
         $('#play').attr('value', 'Играть');
         $('#page-game').hide();
@@ -114,8 +112,8 @@
         $('#page-lobby').show();
         $('#userList').hide();
         $('#page-main').show();
-
         clearGamesList();
+        socket.emit('resign', {userId: username, gameId: serverGame.id});
     });
 
     let addUser = function (userId) {
@@ -142,8 +140,8 @@
             $('#gamesList').append($('<button>')
                 .text('#' + game)
                 .on('click', function () {
-                    socket.emit('resumegame', game);
                     $('#page-main').hide();
+                    socket.emit('resumegame', game);
                 }));
         });
     };
@@ -154,8 +152,8 @@
             $('#userList').append($('<button>')
                 .text(user)
                 .on('click', function () {
-                    socket.emit('invite', user);
                     $('#page-main').hide();
+                    socket.emit('invite', user);
                 }));
         });
     };
@@ -196,13 +194,12 @@
         });
         move.isCheck = game.in_check();
         move.isCheckMate = game.in_checkmate();
-        //alert(game.in_check());
         if (move === null) {
             return 'snapback';
         } else {
-            socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen()});
             let convertMove = convertLog(move);
             showLog(convertMove);
+            socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen()});
         }
     };
 
@@ -262,7 +259,7 @@
         }
         switch(move.captured){
             case undefined: msgConvert.captured = ''; break;
-            case 'b': msgConvert.piece = 'Слоник'; break;
+            case 'b': msgConvert.captured = 'Слоник'; break;
             case 'k': msgConvert.captured = 'Король'; break;
             case 'n': msgConvert.captured = 'Конь'; break;
             case 'p': msgConvert.captured = 'Пешка'; break;
@@ -273,15 +270,20 @@
     }
 
     function showLog(msgConvert) {
-        $('#logs').append('<p>' + msgConvert.dateTimeConvert + '|'
-            + msgConvert.color + '|'
-            + msgConvert.piece + '|'
-            + msgConvert.from + '->' + msgConvert.to + '|'
-            + msgConvert.flags + ' '
-            + msgConvert.captured + ' '
-            + msgConvert.isCheck + ' '
-            + msgConvert.isCheckMate);
-
+        $('#logs').append(
+            '<table>'+
+                '<tr>'+
+                '<th class="wide-th">'+msgConvert.dateTimeConvert+'</th>'+
+                '<th class="just-th">'+msgConvert.color+'</th>'+
+                '<th class="just-th">'+msgConvert.piece+'</th>'+
+                '<th class="just-th">'+msgConvert.from+' -> '+msgConvert.to+'</th>'+
+                '<th class="wide-th">'+msgConvert.flags +' '+
+                                        msgConvert.captured+' '+
+                                        msgConvert.isCheck+' '+
+                                        msgConvert.isCheckMate+'</th>'+
+                '</tr>'+
+            '</table>'
+        );
     }
 
 })();
