@@ -11,10 +11,9 @@
     <input id='username'/>
     <button id='login'>Войти</button>
 </div>
-    <h2 id='userLabel'></h2>
+<h2 id='userLabel'></h2>
 <div id="page-main">
     <div class="part-of-page-main" id='statistics'>
-        <br></dr>
         <h3>Статистика</h3>
         //Ждет подключения к БД
     </div>
@@ -34,7 +33,9 @@
 <div class="page game" id='page-game'>
     <button id='game-back'>На главную страницу</button>
     <button id='game-resign'>Сдаться</button>
-    <div id='game-board' style="width: 400px">
+    <div id='game-board' style="width: 400px"></div>
+    <div id="logs">
+        <p>Веремя &nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp | Цвет | Фигура | Координаты хода | Действие</p>
     </div>
 </div>
 <script src="lib/socket.io-1.2.0.js"></script>

@@ -118,8 +118,8 @@ io.on('connection', function (socket) {
     });
 
     socket.on('move', function (msg) {
-        socket.broadcast.emit('move', msg);
         activeGames[msg.gameId].board = msg.board;
+        socket.broadcast.emit('move', msg);
         console.log(msg);
     });
 

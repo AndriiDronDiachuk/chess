@@ -51,8 +51,12 @@
         if (serverGame && msg.gameId === serverGame.id) {
             game.move(msg.move);
             board.position(game.fen());
+            let convertMove = convertLog(msg.move);
+            showLog(convertMove);
         }
     });
+
+
 
     socket.on('logout', function (msg) {
         removeUser(msg.username);
@@ -161,7 +165,7 @@
 
         let cfg = {
             draggable: true,
-            showNotation: false,
+            showNotation: true,
             orientation: playerColor,
             position: serverGame.board ? serverGame.board : 'start',
             onDragStart: onDragStart,
@@ -184,16 +188,21 @@
 
 
     let onDrop = function (source, target) {
+
         let move = game.move({
             from: source,
             to: target,
-            promotion: 'q'
+            promotion: 'q',
         });
-
+        move.isCheck = game.in_check();
+        move.isCheckMate = game.in_checkmate();
+        //alert(game.in_check());
         if (move === null) {
             return 'snapback';
         } else {
             socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen()});
+            let convertMove = convertLog(move);
+            showLog(convertMove);
         }
     };
 
@@ -202,7 +211,78 @@
     };
 
     socket.on('colorErr', function () {
-        alert("Этот игрок выбрал ваш цвет! Виберите другого игрока");
-    })
+        alert("Этот игрок выбрал Ваш цвет! Виберите другого игрока");
+    });
+
+    function convertLog(move) {
+        let dateTime = new Date();
+        let options = {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            second: 'numeric'
+        };
+        let dateTimeConvert = dateTime.toLocaleString('ru',options);
+        let msgConvert = {
+            dateTime: dateTime,
+            dateTimeConvert: dateTimeConvert,
+            from: move.from,
+            to: move.to
+        };
+        switch (move.color){
+            case 'w': msgConvert.color = 'Белый'; break;
+            case 'b': msgConvert.color = 'Черный'; break;
+        }
+        switch (move.isCheck){
+            case true: msgConvert.isCheck = 'Шах'; break;
+            case false: msgConvert.isCheck = ''; break;
+        }
+        switch (move.isCheckMate){
+            case true: msgConvert.isCheckMate = 'Мат'; break;
+            case false: msgConvert.isCheckMate = ''; break;
+        }
+        switch (move.flags){
+            case 'b': //a pawn push of two squares
+            case 'n': msgConvert.flags = 'Ход'; break; // a non-capture
+            case 'p': mscConvert.flags = 'Повышение'; break;  // a pawn promotion
+            case 'e': //an en passant capture
+            case 'c': msgConvert.flags = 'Бой'; break; // standard capture
+            case 'k': msgConvert.flags = 'Рокировка от короля'; break;
+            case 'q': msgConvert.flags = 'Рокировка от королевы'; break;
+        }
+        switch (move.piece){
+            case 'b': msgConvert.piece = 'Слоник'; break;
+            case 'k': msgConvert.piece = 'Король'; break;
+            case 'n': msgConvert.piece = 'Конь'; break;
+            case 'p': msgConvert.piece = 'Пешка'; break;
+            case 'q': msgConvert.piece = 'Королева'; break;
+            case 'r': msgConvert.piece = 'Тура'; break;
+        }
+        switch(move.captured){
+            case undefined: msgConvert.captured = ''; break;
+            case 'b': msgConvert.piece = 'Слоник'; break;
+            case 'k': msgConvert.captured = 'Король'; break;
+            case 'n': msgConvert.captured = 'Конь'; break;
+            case 'p': msgConvert.captured = 'Пешка'; break;
+            case 'q': msgConvert.captured = 'Королева'; break;
+            case 'r': msgConvert.captured = 'Тура'; break;
+        }
+        return msgConvert;
+    }
+
+    function showLog(msgConvert) {
+        $('#logs').append('<p>' + msgConvert.dateTimeConvert + '|'
+            + msgConvert.color + '|'
+            + msgConvert.piece + '|'
+            + msgConvert.from + '->' + msgConvert.to + '|'
+            + msgConvert.flags + ' '
+            + msgConvert.captured + ' '
+            + msgConvert.isCheck + ' '
+            + msgConvert.isCheckMate);
+
+    }
+
 })();
 
