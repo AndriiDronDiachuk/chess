@@ -31,7 +31,7 @@ io.on('connection', function (socket) {
 
         if (!users[userId]) {
             console.log('creating new user');
-            users[userId] = {userId: socket.userId, userColor: socket.userColor, games: {}};
+            users[userId] = {userId: socket.userId, games: {}};
         } else {
             console.log('user found!');
             Object.keys(users[userId].games).forEach(function (gameId) {
@@ -53,14 +53,14 @@ io.on('connection', function (socket) {
 
         let userColor = socket.userId.substr(-1);
         let opponentColor = opponentId.substr(-1);
-        if(userColor!==opponentColor) {
+        if (userColor !== opponentColor) {
             let firstGamer;
             let secondGamer;
-            if(userColor==='Б'){
+            if (userColor === 'Б') {
                 firstGamer = socket.userId;
                 secondGamer = opponentId;
             }
-            else if(userColor==='Ч') {
+            else if (userColor === 'Ч') {
                 firstGamer = opponentId;
                 secondGamer = socket.userId;
             }
@@ -88,7 +88,7 @@ io.on('connection', function (socket) {
 
             socket.broadcast.emit('gameadd', {gameId: game.id, gameState: game});
         }
-        else{
+        else {
             socket.emit('colorErr');
         }
     });

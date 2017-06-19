@@ -32,14 +32,22 @@
 </div>
 <div class="page game" id='page-game'>
     <div id="chess-board">
-        <button id='game-back'>На главную страницу</button>
-        <button id='game-resign'>Сдаться</button>
+        <div id="game-buttons">
+            <button id='game-back'>На главную страницу</button>
+            <button id='game-resign'>Сдаться</button>
+        </div>
+        <div id="wins" class="game-part">
+            <p>Сбитые черные:</p>
+        </div>
         <div id='game-board' style="width: 400px"></div>
+        <div id="fails" class="game-part">
+            <p>Сбитые белые:</p>
+        </div>
     </div>
     <div id="logs">
         <table>
             <tr>
-                <th class="wide-th">Веремя</th>
+                <th class="wide-th">Время</th>
                 <th class="just-th">Цвет</th>
                 <th class="just-th">Фигура</th>
                 <th class="just-th">Координаты хода</th>

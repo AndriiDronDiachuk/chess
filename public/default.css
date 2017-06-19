@@ -75,11 +75,34 @@ body {
     width: 100pt;
 }
 
-#chess-board{
-    position: relative;
-    left: 26%;
-}
-
 #logs{
     text-align: left;
+}
+
+.game-part{
+    display: inline-block;
+    position: relative;
+    vertical-align: top;
+    font-size: 14pt;
+    border-radius: 3px;
+    padding: 5pt;
+    width: 23%;
+}
+
+#fails{
+    background-color: aliceblue;
+}
+
+#wins{
+    background-color: ghostwhite;
+}
+
+#game-board{
+    position: relative;
+    display: inline-block;
+}
+
+#game-buttons{
+    position: relative;
+    left: 27%;
 }

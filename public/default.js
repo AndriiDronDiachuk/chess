@@ -35,6 +35,8 @@
             $('#userList').hide();
             $('#page-main').show();
             clearGamesList();
+            clearLog();
+            clearCaptured();
         }
     });
 
@@ -52,6 +54,9 @@
             game.move(msg.move);
             board.position(game.fen());
             let convertMove = convertLog(msg.move);
+            if (isCaptured(convertMove)) {
+                showCaptured(convertMove);
+            }
             showLog(convertMove);
         }
     });
@@ -104,7 +109,6 @@
     });
 
     $('#game-resign').on('click', function () {
-
         $('#play').attr('disabled', false);
         $('#play').attr('value', 'Играть');
         $('#page-game').hide();
@@ -113,6 +117,8 @@
         $('#userList').hide();
         $('#page-main').show();
         clearGamesList();
+        clearLog();
+        clearCaptured();
         socket.emit('resign', {userId: username, gameId: serverGame.id});
     });
 
@@ -192,13 +198,18 @@
             to: target,
             promotion: 'q',
         });
-        move.isCheck = game.in_check();
-        move.isCheckMate = game.in_checkmate();
+
         if (move === null) {
             return 'snapback';
         } else {
+            move.isCheck = game.in_check();
+            move.isCheckMate = game.in_checkmate();
             let convertMove = convertLog(move);
             showLog(convertMove);
+
+            if (isCaptured(convertMove) === true) {
+                showCaptured(convertMove);
+            }
             socket.emit('move', {move: move, gameId: serverGame.id, board: game.fen()});
         }
     };
@@ -221,69 +232,155 @@
             minute: 'numeric',
             second: 'numeric'
         };
-        let dateTimeConvert = dateTime.toLocaleString('ru',options);
+        let dateTimeConvert = dateTime.toLocaleString('ru', options);
         let msgConvert = {
             dateTime: dateTime,
             dateTimeConvert: dateTimeConvert,
             from: move.from,
             to: move.to
         };
-        switch (move.color){
-            case 'w': msgConvert.color = 'Белый'; break;
-            case 'b': msgConvert.color = 'Черный'; break;
+        switch (move.color) {
+            case 'w':
+                msgConvert.color = 'Белый';
+                break;
+            case 'b':
+                msgConvert.color = 'Черный';
+                break;
         }
-        switch (move.isCheck){
-            case true: msgConvert.isCheck = 'Шах'; break;
-            case false: msgConvert.isCheck = ''; break;
+        switch (move.isCheck) {
+            case true:
+                msgConvert.isCheck = 'Шах';
+                break;
+            case false:
+                msgConvert.isCheck = '';
+                break;
         }
-        switch (move.isCheckMate){
-            case true: msgConvert.isCheckMate = 'Мат'; break;
-            case false: msgConvert.isCheckMate = ''; break;
+        switch (move.isCheckMate) {
+            case true:
+                msgConvert.isCheckMate = 'Мат';
+                break;
+            case false:
+                msgConvert.isCheckMate = '';
+                break;
         }
-        switch (move.flags){
+        switch (move.flags) {
             case 'b': //a pawn push of two squares
-            case 'n': msgConvert.flags = 'Ход'; break; // a non-capture
-            case 'p': mscConvert.flags = 'Повышение'; break;  // a pawn promotion
+            case 'n':
+                msgConvert.flags = 'Ход';
+                break; // a non-capture
+            case 'p':
+                mscConvert.flags = 'Повышение';
+                break;  // a pawn promotion
             case 'e': //an en passant capture
-            case 'c': msgConvert.flags = 'Бой'; break; // standard capture
-            case 'k': msgConvert.flags = 'Рокировка от короля'; break;
-            case 'q': msgConvert.flags = 'Рокировка от королевы'; break;
+            case 'c':
+                msgConvert.flags = 'Бой';
+                break; // standard capture
+            case 'k':
+                msgConvert.flags = 'Рокировка от короля';
+                break;
+            case 'q':
+                msgConvert.flags = 'Рокировка от королевы';
+                break;
         }
-        switch (move.piece){
-            case 'b': msgConvert.piece = 'Слоник'; break;
-            case 'k': msgConvert.piece = 'Король'; break;
-            case 'n': msgConvert.piece = 'Конь'; break;
-            case 'p': msgConvert.piece = 'Пешка'; break;
-            case 'q': msgConvert.piece = 'Королева'; break;
-            case 'r': msgConvert.piece = 'Тура'; break;
+        switch (move.piece) {
+            case 'b':
+                msgConvert.piece = 'Слоник';
+                break;
+            case 'k':
+                msgConvert.piece = 'Король';
+                break;
+            case 'n':
+                msgConvert.piece = 'Конь';
+                break;
+            case 'p':
+                msgConvert.piece = 'Пешка';
+                break;
+            case 'q':
+                msgConvert.piece = 'Королева';
+                break;
+            case 'r':
+                msgConvert.piece = 'Тура';
+                break;
         }
-        switch(move.captured){
-            case undefined: msgConvert.captured = ''; break;
-            case 'b': msgConvert.captured = 'Слоник'; break;
-            case 'k': msgConvert.captured = 'Король'; break;
-            case 'n': msgConvert.captured = 'Конь'; break;
-            case 'p': msgConvert.captured = 'Пешка'; break;
-            case 'q': msgConvert.captured = 'Королева'; break;
-            case 'r': msgConvert.captured = 'Тура'; break;
+        switch (move.captured) {
+            case undefined:
+                msgConvert.captured = '';
+                break;
+            case 'b':
+                msgConvert.captured = 'Слоник';
+                break;
+            case 'k':
+                msgConvert.captured = 'Король';
+                break;
+            case 'n':
+                msgConvert.captured = 'Конь';
+                break;
+            case 'p':
+                msgConvert.captured = 'Пешка';
+                break;
+            case 'q':
+                msgConvert.captured = 'Королева';
+                break;
+            case 'r':
+                msgConvert.captured = 'Тура';
+                break;
         }
         return msgConvert;
     }
 
     function showLog(msgConvert) {
         $('#logs').append(
-            '<table>'+
-                '<tr>'+
-                '<th class="wide-th">'+msgConvert.dateTimeConvert+'</th>'+
-                '<th class="just-th">'+msgConvert.color+'</th>'+
-                '<th class="just-th">'+msgConvert.piece+'</th>'+
-                '<th class="just-th">'+msgConvert.from+' -> '+msgConvert.to+'</th>'+
-                '<th class="wide-th">'+msgConvert.flags +' '+
-                                        msgConvert.captured+' '+
-                                        msgConvert.isCheck+' '+
-                                        msgConvert.isCheckMate+'</th>'+
-                '</tr>'+
+            '<table class="dynamic">' +
+            '<tr>' +
+            '<th class="wide-th">' + msgConvert.dateTimeConvert + '</th>' +
+            '<th class="just-th">' + msgConvert.color + '</th>' +
+            '<th class="just-th">' + msgConvert.piece + '</th>' +
+            '<th class="just-th">' + msgConvert.from + ' -> ' + msgConvert.to + '</th>' +
+            '<th class="wide-th">' + msgConvert.flags + ' ' +
+            msgConvert.captured + ' ' +
+            msgConvert.isCheck + ' ' +
+            msgConvert.isCheckMate + '</th>' +
+            '</tr>' +
             '</table>'
         );
+    }
+
+    function clearLog() {
+        $('#logs').empty();
+        $('#logs').append(
+            '<table class="dynamic">' +
+            '<tr>' +
+            '<th class="wide-th">Время</th>' +
+            '<th class="just-th">Цвет</th>' +
+            '<th class="just-th">Фигура</th>' +
+            '<th class="just-th">Координаты хода</th>' +
+            '<th class="wide-th">Действие</th>' +
+            '</tr>' +
+            '</table>'
+        );
+    }
+
+    function clearCaptured() {
+        $('#wins').empty();
+        $('#fails').empty();
+        $('#fails').append('<p>Сбитые белые:</p>');
+        $('#wins').append('<p>Сбитые черные:</p>');
+    }
+
+    function isCaptured(move) {
+        if (move.captured !== '') {
+            return true;
+        }
+        return false;
+    }
+
+    function showCaptured(move) {
+        if (move.color === 'Черный') {
+            $('#fails').append('<a>' + move.captured + ', ' + '</a>');
+        }
+        else if (move.color === 'Белый') {
+            $('#wins').append('<a>' + move.captured + ', ' + '</a>');
+        }
     }
 
 })();
