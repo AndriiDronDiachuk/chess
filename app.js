@@ -1,3 +1,44 @@
+//подключение бд
+const Sequelize = require('sequelize');
+const connection = new Sequelize('chessdb', 'postgres', '1111', {
+    host: 'localhost',
+    port: 5432,
+    dialect: 'postgres'
+});
+
+//проверка подключения к бд
+connection
+    .authenticate()
+    .then(() => {
+        console.log('Connection to DataBase has been established successfully.');
+    })
+    .catch(err => {
+        console.error('Unable to connect to the database:', err);
+    });
+
+//установка архитеркуры бд
+const Player = connection.define('player', {
+    name: {
+        type: Sequelize.STRING,
+        unique: true,
+        allowNull: false
+    },
+    password: Sequelize.STRING
+});
+
+const Game = connection.define('game', {
+    result: Sequelize.BOOLEAN,
+    timeDuration: Sequelize.DATE
+});
+
+Game.belongsTo(Player, {foreignKey: 'idFirstPlayer'});
+Game.belongsTo(Player, {foreignKey: 'idSecondPlayer'});
+
+/*connection.sync({
+ force: true
+ });*/
+
+
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
@@ -21,6 +62,27 @@ http.listen(2000, function () {
 
 io.on('connection', function (socket) {
     console.log('new connection ' + socket);
+
+    socket.on('sign-up', function (newUser) {
+        connection
+            .sync()
+            .then(function () {
+                Player
+                    .create({
+                        name: newUser.name,
+                        password: newUser.password
+                    })
+                    .then(function (insertedPlayer) {
+                        socket.emit('sign-up', insertedPlayer.dataValues);
+                    })
+                    .catch(connection.ValidationError, function (err) {
+                        console.log(err);
+                        socket.emit('sign-up-err');
+                    })
+            })
+
+
+    });
 
     socket.on('login', function (userId) {
         doLogin(socket, userId);

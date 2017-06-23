@@ -65,6 +65,22 @@
         removeUser(msg.username);
     });
 
+    socket.on('sign-up-err', function () {
+        alert('Пользователь с таким именем уже существует!');
+    });
+
+    socket.on('sign-up', function (insertedPlayer) {
+        alert('Вы зарегистированы! Имя: ' + insertedPlayer.name + ', пароль: ' + insertedPlayer.password);
+    });
+
+    $('#sign-up').on('click', function () {
+        let newUser = {
+            name: $('#username').val(),
+            password: $('#password').val()
+        };
+        socket.emit('sign-up', newUser);
+    });
+
     $('#login').on('click', function () {
         username = $('#username').val();
         $('#1radio').attr('checked', 'checked');
