@@ -23,6 +23,8 @@
     });
 
     socket.on('gameadd', function (msg) {
+
+        addGame();
     });
 
     socket.on('resign', function (msg) {
@@ -62,7 +64,10 @@
     });
 
     socket.on('logout', function (msg) {
-        removeUser(msg.username);
+        removeUser(msg.userId);
+        alert(msg.gameId);
+        removeGame(msg.gameId);
+
     });
 
     socket.on('sign-up-err', function () {
@@ -73,24 +78,35 @@
         alert('Вы зарегистированы! Имя: ' + insertedPlayer.name + ', пароль: ' + insertedPlayer.password);
     });
 
-    $('#sign-up').on('click', function () {
-        let newUser = {
-            name: $('#username').val(),
-            password: $('#password').val()
-        };
-        socket.emit('sign-up', newUser);
-    });
-
-    $('#login').on('click', function () {
-        username = $('#username').val();
-        $('#1radio').attr('checked', 'checked');
-        if (username.length > 0) {
-            $('#userLabel').text(username);
-            $('#page-login').hide();
-            $('#page-lobby').show();
-            $('#page-main').show();
+    socket.on('login-check', function (check) {
+        if (check.existCount !== 0) {
+            if (check.passCount !== 0) {
+                username = $('#username').val();
+                $('#1radio').attr('checked', 'checked');
+                if (username.length > 0) {
+                    $('#userLabel').text(username);
+                    $('#page-login').hide();
+                    $('#page-lobby').show();
+                    $('#page-main').show();
+                }
+            }
+            else {
+                alert('Неверный пароль!');
+            }
+        }
+        else {
+            alert('Вы не зарегистрированы!');
         }
     });
+
+    $('#sign-up').on('click', function () {
+        socket.emit('sign-up', createNewUserForDb());
+    });
+
+    $('#sign-in').on('click', function () {
+        socket.emit('login-check', createNewUserForDb());
+    });
+
     $('#play').on('click', function () {
         let username = $('#username').val();
         let usercolor = $('input[type=radio]:checked').val();
@@ -138,12 +154,23 @@
         socket.emit('resign', {userId: username, gameId: serverGame.id});
     });
 
+    let createNewUserForDb = function () {
+        let newUser = {
+            name: $('#username').val(),
+            password: $('#password').val()
+        };
+        return newUser;
+    }
+
     let addUser = function (userId) {
         usersOnline.push(userId);
         updateUserList();
     };
 
     let removeUser = function (userId) {
+        userId = userId.substring(0, userId.length - 3);
+        alert(userId);
+
         for (let i = 0; i < usersOnline.length; i++) {
             if (usersOnline[i] === userId) {
                 usersOnline.splice(i, 1);
@@ -151,6 +178,18 @@
         }
         updateUserList();
     };
+
+    let removeGame = function (gameId) {
+        for (let i = 0; i < myGames.length; i++) {///////
+            if (myGames[i] === gameId) {
+                myGames.splice(i, 1);
+                alert('successful deleting!')
+            }
+        }
+        updateGamesList();
+        alert(myGames[ga]);
+        alert('фция удаления игры вызвана!');
+    }
 
     let clearGamesList = function () {
         document.getElementById('gamesList').innerHTML = '';
@@ -206,7 +245,6 @@
         }
     };
 
-
     let onDrop = function (source, target) {
 
         let move = game.move({
@@ -234,7 +272,7 @@
         board.position(game.fen());
     };
 
-    socket.on('colorErr', function () {
+    socket.on('color-err', function () {
         alert("Этот игрок выбрал Ваш цвет! Виберите другого игрока");
     });
 
@@ -397,6 +435,11 @@
         else if (move.color === 'Белый') {
             $('#wins').append('<a>' + move.captured + ', ' + '</a>');
         }
+    }
+
+    function addGame(msg) {
+        myGames.push(msg.gameId);
+        updateGamesList();
     }
 
 })();

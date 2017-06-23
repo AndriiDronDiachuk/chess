@@ -3,7 +3,13 @@ const Sequelize = require('sequelize');
 const connection = new Sequelize('chessdb', 'postgres', '1111', {
     host: 'localhost',
     port: 5432,
-    dialect: 'postgres'
+    dialect: 'postgres'/*,
+
+    pool: {
+        max: 20,
+        min: 0,
+        idle: 10000
+    },*/
 });
 
 //проверка подключения к бд
@@ -31,13 +37,18 @@ const Game = connection.define('game', {
     timeDuration: Sequelize.DATE
 });
 
-Game.belongsTo(Player, {foreignKey: 'idFirstPlayer'});
-Game.belongsTo(Player, {foreignKey: 'idSecondPlayer'});
+Game.belongsTo(Player, {
+    as: 'idFirstPlayer',
+    foreignKey: 'idOfFirstPlayer'
+});
+Game.belongsTo(Player, {
+    as: 'idSecondPlayer',
+    foreignKey: 'idOfSecondPlayer'
+});
 
 /*connection.sync({
  force: true
  });*/
-
 
 const express = require('express');
 const app = express();
@@ -79,9 +90,31 @@ io.on('connection', function (socket) {
                         console.log(err);
                         socket.emit('sign-up-err');
                     })
+            });
+    });
+
+    socket.on('login-check', function (loginedUser) {
+        let check = {};
+        Player
+            .count({
+                where: {
+                    name: loginedUser.name
+                }
             })
-
-
+            .then(function (count) {
+                check.existCount = count;
+            });
+        Player
+            .count({
+                where: {
+                    name: loginedUser.name,
+                    password: loginedUser.password
+                }
+            })
+            .then(function (count) {
+                check.passCount = count;
+                socket.emit('login-check', check);
+            });
     });
 
     socket.on('login', function (userId) {
@@ -112,22 +145,22 @@ io.on('connection', function (socket) {
 
     socket.on('invite', function (opponentId) {
         console.log('got an invite from: ' + socket.userId + ' --> ' + opponentId);
-
+        socket.opponentId = opponentId;
         let userColor = socket.userId.substr(-1);
-        let opponentColor = opponentId.substr(-1);
+        let opponentColor = socket.opponentId.substr(-1);
         if (userColor !== opponentColor) {
             let firstGamer;
             let secondGamer;
             if (userColor === 'Б') {
                 firstGamer = socket.userId;
-                secondGamer = opponentId;
+                secondGamer = socket.opponentId;
             }
             else if (userColor === 'Ч') {
-                firstGamer = opponentId;
+                firstGamer = socket.opponentId;
                 secondGamer = socket.userId;
             }
             socket.broadcast.emit('leavelobby', socket.userId);
-            socket.broadcast.emit('leavelobby', opponentId);
+            socket.broadcast.emit('leavelobby', socket.opponentId);
 
             let game = {
                 id: Math.floor((Math.random() * 100) + 1),
@@ -136,6 +169,7 @@ io.on('connection', function (socket) {
             };
 
             socket.gameId = game.id;
+            console.log('gameid:!!!!',socket.gameId);
             activeGames[game.id] = game;
 
             users[game.users.white].games[game.id] = game.id;
@@ -151,7 +185,7 @@ io.on('connection', function (socket) {
             socket.broadcast.emit('gameadd', {gameId: game.id, gameState: game});
         }
         else {
-            socket.emit('colorErr');
+            socket.emit('color-err');
         }
     });
 
@@ -190,6 +224,8 @@ io.on('connection', function (socket) {
         delete users[activeGames[msg.gameId].users.black].games[msg.gameId];
         delete activeGames[msg.gameId];
 
+        //мат
+
         socket.broadcast.emit('resign', msg);
     });
 
@@ -197,18 +233,24 @@ io.on('connection', function (socket) {
     socket.on('disconnect', function (msg) {
 
         console.log(msg);
-
-        if (socket && socket.userId && socket.gameId) {
-            console.log(socket.userId + ' disconnected');
-            console.log(socket.gameId + ' disconnected');
+        console.log('llllaaaaal');
+        if (socket || socket.userId || socket.gameId || socket.opponentId) {
+            console.log(socket.userId + ' disconnected us');
+            console.log(socket.gameId + ' disconnected ga');
+            console.log(socket.opponentId + ' disconnected op')
         }
-
+        socket.emit('resign',{
+            gameId: socket.gameId
+        });
         delete lobbyUsers[socket.userId];
+        delete lobbyUsers[socket.opponentId];
+        delete activeGames[socket.gameId];
 
         socket.broadcast.emit('logout', {
             userId: socket.userId,
-            gameId: socket.gameId
+            gameId: socket.gameId,
+            opponentId: socket.opponentId
         });
     });
-});
+})
 
