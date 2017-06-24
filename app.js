@@ -1,58 +1,16 @@
-//подключение бд
 const Sequelize = require('sequelize');
-const connection = new Sequelize('chessdb', 'postgres', '1111', {
-    host: 'localhost',
-    port: 5432,
-    dialect: 'postgres'
-});
-
-//проверка подключения к бд
-connection
-    .authenticate()
-    .then(() => {
-        console.log('Connection to DataBase has been established successfully.');
-    })
-    .catch(err => {
-        console.error('Unable to connect to the database:', err);
-    });
-
-//установка архитеркуры бд
-const Player = connection.define('player', {
-    name: {
-        type: Sequelize.STRING,
-        unique: true,
-        allowNull: false
-    },
-    password: Sequelize.STRING
-});
-
-const Game = connection.define('game', {
-    result: Sequelize.BOOLEAN,
-    idOfFirstPlayer: Sequelize.INTEGER,
-    idOfSecondPlayer: Sequelize.INTEGER
-});
-
-Game.belongsTo(Player, {
-    as: 'idWinner',
-    foreignKey: 'idOfFirstPlayer'
-});
-Game.belongsTo(Player, {
-    as: 'idLooser',
-    foreignKey: 'idOfSecondPlayer'
-});
-
-/*connection.sync({
- force: true
- });*/
+const connection = require('./db/connection');
+const Player = require('./db/models/player');
+require('./db/relations');
+const queries = require('./db/queries');
 
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
+const io = require('socket.io')(http);
 
 app.use(express.static('public'));
 app.use(express.static('dashboard'));
-
-const io = require('socket.io')(http);
 
 const lobbyUsers = {};
 const users = {};
@@ -65,77 +23,6 @@ app.get('/', function (req, res) {
 http.listen(2000, function () {
     console.log('Server started on port 2000.');
 });
-
-function saveGameInit(msg) {
-    let gameInfo = {};
-    connection
-        .sync()
-        .then(function () {
-            Player
-                .findOne({where: {name: msg.userId}})
-                .then(function (player) {
-                    gameInfo.firstId = player.dataValues.id;
-                    Player
-                        .findOne({where: {name: msg.opponentId}})
-                        .then(function (player) {
-                            gameInfo.secondId = player.dataValues.id;
-                            Game
-                                .create({
-                                    idOfFirstPlayer: gameInfo.firstId,
-                                    idOfSecondPlayer: gameInfo.secondId
-                                })
-                        });
-                })
-        });
-}
-
-function saveGameResult(msg) {
-    let looserId, winnerId;
-    connection
-        .sync()
-        .then(function () {
-            Player
-                .findOne({where: {name: msg.winnerId}})
-                .then(function (player) {
-                    winnerId = player.dataValues.id;
-                    Player
-                        .findOne({where: {name: msg.looserId}})
-                        .then(function (player) {
-                            looserId = player.dataValues.id;
-                        }).then(function () {
-                            Game
-                                .findOne({
-                                        where: {
-                                            $or: [
-                                                {idOfSecondPlayer: looserId},
-                                                {idOfSecondPlayer: winnerId}
-                                            ],
-                                            $and: {
-                                                $or: [
-                                                    {idOfFirstPlayer: looserId},
-                                                    {idOfFirstPlayer: winnerId}
-                                                ]
-                                            },
-                                            $and: {result: null}
-                                        }
-                                    }
-                                )
-                                .then(function (res) {
-                                    console.log(res.dataValues.id);
-                                    let condition = res.dataValues.id;
-                                    Game
-                                        .update({
-                                                idOfFirstPlayer: winnerId,
-                                                idOfSecondPlayer: looserId,
-                                                result: true
-                                            },
-                                            {where: {id: condition}})
-                                })
-                        }
-                    )
-                })
-        })
-}
 
 io.on('connection', function (socket) {
     console.log('new connection ' + socket);
@@ -247,10 +134,10 @@ io.on('connection', function (socket) {
             delete lobbyUsers[game.users.white];
             delete lobbyUsers[game.users.black];
 
-            saveGameInit({
+            queries.saveGameInit({
                 userId: socket.userId.slice(0, -3),
                 opponentId: socket.opponentId.slice(0, -3)
-            })
+            });
             socket.broadcast.emit('gameadd', {gameId: game.id, gameState: game});
         }
         else {
@@ -295,7 +182,7 @@ io.on('connection', function (socket) {
                 socket.opponentId = users[activeGames[msg.gameId].users.white].userId;
             }
 
-            saveGameResult({
+            queries.saveGameResult({
                 winnerId:socket.userId.slice(0,-3),
                 looserId:socket.opponentId.slice(0,-3),
                 result:result
@@ -320,7 +207,15 @@ io.on('connection', function (socket) {
         console.log('user: ' + msg.userId);
         console.log('opponent: ' + socket.opponentId);
 
-        saveGameResult({
+        if(socket.userId===users[activeGames[msg.gameId].users.white].userId)
+        {
+            socket.opponentId = users[activeGames[msg.gameId].users.black].userId;
+        }
+        else{
+            socket.opponentId = users[activeGames[msg.gameId].users.white].userId;
+        }
+
+        queries.saveGameResult({
             winnerId: socket.opponentId.slice(0, -3),
             looserId: msg.userId,
             result: true
@@ -350,4 +245,3 @@ io.on('connection', function (socket) {
         });
     });
 });
-
