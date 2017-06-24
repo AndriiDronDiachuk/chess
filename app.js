@@ -3,13 +3,7 @@ const Sequelize = require('sequelize');
 const connection = new Sequelize('chessdb', 'postgres', '1111', {
     host: 'localhost',
     port: 5432,
-    dialect: 'postgres'/*,
-
-    pool: {
-        max: 20,
-        min: 0,
-        idle: 10000
-    },*/
+    dialect: 'postgres'
 });
 
 //проверка подключения к бд
@@ -34,15 +28,16 @@ const Player = connection.define('player', {
 
 const Game = connection.define('game', {
     result: Sequelize.BOOLEAN,
-    timeDuration: Sequelize.DATE
+    idOfFirstPlayer: Sequelize.INTEGER,
+    idOfSecondPlayer: Sequelize.INTEGER
 });
 
 Game.belongsTo(Player, {
-    as: 'idFirstPlayer',
+    as: 'idWinner',
     foreignKey: 'idOfFirstPlayer'
 });
 Game.belongsTo(Player, {
-    as: 'idSecondPlayer',
+    as: 'idLooser',
     foreignKey: 'idOfSecondPlayer'
 });
 
@@ -70,6 +65,77 @@ app.get('/', function (req, res) {
 http.listen(2000, function () {
     console.log('Server started on port 2000.');
 });
+
+function saveGameInit(msg) {
+    let gameInfo = {};
+    connection
+        .sync()
+        .then(function () {
+            Player
+                .findOne({where: {name: msg.userId}})
+                .then(function (player) {
+                    gameInfo.firstId = player.dataValues.id;
+                    Player
+                        .findOne({where: {name: msg.opponentId}})
+                        .then(function (player) {
+                            gameInfo.secondId = player.dataValues.id;
+                            Game
+                                .create({
+                                    idOfFirstPlayer: gameInfo.firstId,
+                                    idOfSecondPlayer: gameInfo.secondId
+                                })
+                        });
+                })
+        });
+}
+
+function saveGameResult(msg) {
+    let looserId, winnerId;
+    connection
+        .sync()
+        .then(function () {
+            Player
+                .findOne({where: {name: msg.winnerId}})
+                .then(function (player) {
+                    winnerId = player.dataValues.id;
+                    Player
+                        .findOne({where: {name: msg.looserId}})
+                        .then(function (player) {
+                            looserId = player.dataValues.id;
+                        }).then(function () {
+                            Game
+                                .findOne({
+                                        where: {
+                                            $or: [
+                                                {idOfSecondPlayer: looserId},
+                                                {idOfSecondPlayer: winnerId}
+                                            ],
+                                            $and: {
+                                                $or: [
+                                                    {idOfFirstPlayer: looserId},
+                                                    {idOfFirstPlayer: winnerId}
+                                                ]
+                                            },
+                                            $and: {result: null}
+                                        }
+                                    }
+                                )
+                                .then(function (res) {
+                                    console.log(res.dataValues.id);
+                                    let condition = res.dataValues.id;
+                                    Game
+                                        .update({
+                                                idOfFirstPlayer: winnerId,
+                                                idOfSecondPlayer: looserId,
+                                                result: true
+                                            },
+                                            {where: {id: condition}})
+                                })
+                        }
+                    )
+                })
+        })
+}
 
 io.on('connection', function (socket) {
     console.log('new connection ' + socket);
@@ -169,7 +235,6 @@ io.on('connection', function (socket) {
             };
 
             socket.gameId = game.id;
-            console.log('gameid:!!!!',socket.gameId);
             activeGames[game.id] = game;
 
             users[game.users.white].games[game.id] = game.id;
@@ -182,6 +247,10 @@ io.on('connection', function (socket) {
             delete lobbyUsers[game.users.white];
             delete lobbyUsers[game.users.black];
 
+            saveGameInit({
+                userId: socket.userId.slice(0, -3),
+                opponentId: socket.opponentId.slice(0, -3)
+            })
             socket.broadcast.emit('gameadd', {gameId: game.id, gameState: game});
         }
         else {
@@ -212,45 +281,73 @@ io.on('connection', function (socket) {
     });
 
     socket.on('move', function (msg) {
-        activeGames[msg.gameId].board = msg.board;
-        console.log(msg);
-        socket.broadcast.emit('move', msg);
+
+        if(msg.move.isCheckMate || msg.move.isStalemate){
+            let result;
+            if(msg.move.isCheckMate) result = true;
+            else result = false;
+
+            if(socket.userId===users[activeGames[msg.gameId].users.white].userId)
+            {
+                socket.opponentId = users[activeGames[msg.gameId].users.black].userId;
+            }
+            else{
+                socket.opponentId = users[activeGames[msg.gameId].users.white].userId;
+            }
+
+            saveGameResult({
+                winnerId:socket.userId.slice(0,-3),
+                looserId:socket.opponentId.slice(0,-3),
+                result:result
+            });
+
+            delete users[activeGames[msg.gameId].users.white].games[msg.gameId];
+            delete users[activeGames[msg.gameId].users.black].games[msg.gameId];
+            delete activeGames[msg.gameId];
+
+            socket.emit('resign', msg);
+            socket.broadcast.emit('resign', msg);
+        }
+        else {
+            activeGames[msg.gameId].board = msg.board;
+            console.log(msg);
+            socket.broadcast.emit('move', msg);
+        }
     });
 
     socket.on('resign', function (msg) {
         console.log("resign: " + msg);
+        console.log('user: ' + msg.userId);
+        console.log('opponent: ' + socket.opponentId);
+
+        saveGameResult({
+            winnerId: socket.opponentId.slice(0, -3),
+            looserId: msg.userId,
+            result: true
+        });
 
         delete users[activeGames[msg.gameId].users.white].games[msg.gameId];
         delete users[activeGames[msg.gameId].users.black].games[msg.gameId];
         delete activeGames[msg.gameId];
 
-        //мат
-
         socket.broadcast.emit('resign', msg);
     });
-
 
     socket.on('disconnect', function (msg) {
 
         console.log(msg);
-        console.log('llllaaaaal');
-        if (socket || socket.userId || socket.gameId || socket.opponentId) {
-            console.log(socket.userId + ' disconnected us');
-            console.log(socket.gameId + ' disconnected ga');
-            console.log(socket.opponentId + ' disconnected op')
+
+        if (socket && socket.userId && socket.gameId) {
+            console.log(socket.userId + ' disconnected');
+            console.log(socket.gameId + ' disconnected');
         }
-        socket.emit('resign',{
-            gameId: socket.gameId
-        });
+
         delete lobbyUsers[socket.userId];
-        delete lobbyUsers[socket.opponentId];
-        delete activeGames[socket.gameId];
 
         socket.broadcast.emit('logout', {
             userId: socket.userId,
-            gameId: socket.gameId,
-            opponentId: socket.opponentId
+            gameId: socket.gameId
         });
     });
-})
+});
 

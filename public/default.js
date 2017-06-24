@@ -23,8 +23,6 @@
     });
 
     socket.on('gameadd', function (msg) {
-
-        addGame();
     });
 
     socket.on('resign', function (msg) {
@@ -64,10 +62,7 @@
     });
 
     socket.on('logout', function (msg) {
-        removeUser(msg.userId);
-        alert(msg.gameId);
-        removeGame(msg.gameId);
-
+        removeUser(msg.username);
     });
 
     socket.on('sign-up-err', function () {
@@ -106,6 +101,14 @@
     $('#sign-in').on('click', function () {
         socket.emit('login-check', createNewUserForDb());
     });
+
+    function createNewUserForDb() {
+        let newUser = {
+            name: $('#username').val(),
+            password: $('#password').val()
+        };
+        return newUser;
+    }
 
     $('#play').on('click', function () {
         let username = $('#username').val();
@@ -154,23 +157,12 @@
         socket.emit('resign', {userId: username, gameId: serverGame.id});
     });
 
-    let createNewUserForDb = function () {
-        let newUser = {
-            name: $('#username').val(),
-            password: $('#password').val()
-        };
-        return newUser;
-    }
-
     let addUser = function (userId) {
         usersOnline.push(userId);
         updateUserList();
     };
 
     let removeUser = function (userId) {
-        userId = userId.substring(0, userId.length - 3);
-        alert(userId);
-
         for (let i = 0; i < usersOnline.length; i++) {
             if (usersOnline[i] === userId) {
                 usersOnline.splice(i, 1);
@@ -178,18 +170,6 @@
         }
         updateUserList();
     };
-
-    let removeGame = function (gameId) {
-        for (let i = 0; i < myGames.length; i++) {///////
-            if (myGames[i] === gameId) {
-                myGames.splice(i, 1);
-                alert('successful deleting!')
-            }
-        }
-        updateGamesList();
-        alert(myGames[ga]);
-        alert('фция удаления игры вызвана!');
-    }
 
     let clearGamesList = function () {
         document.getElementById('gamesList').innerHTML = '';
@@ -245,6 +225,7 @@
         }
     };
 
+
     let onDrop = function (source, target) {
 
         let move = game.move({
@@ -258,6 +239,7 @@
         } else {
             move.isCheck = game.in_check();
             move.isCheckMate = game.in_checkmate();
+            move.isStalemate = game.in_stalemate();
             let convertMove = convertLog(move);
             showLog(convertMove);
 
@@ -315,6 +297,14 @@
                 break;
             case false:
                 msgConvert.isCheckMate = '';
+                break;
+        }
+        switch (move.isStalemate) {
+            case true:
+                msgConvert.isStalemate = 'Пат';
+                break;
+            case false:
+                msgConvert.isStalemate = '';
                 break;
         }
         switch (move.flags) {
@@ -435,11 +425,6 @@
         else if (move.color === 'Белый') {
             $('#wins').append('<a>' + move.captured + ', ' + '</a>');
         }
-    }
-
-    function addGame(msg) {
-        myGames.push(msg.gameId);
-        updateGamesList();
     }
 
 })();
