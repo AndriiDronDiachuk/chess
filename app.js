@@ -1,6 +1,7 @@
 const Sequelize = require('sequelize');
 const connection = require('./db/connection');
 const Player = require('./db/models/player');
+const Game = require('./db/models/game');
 require('./db/relations');
 const queries = require('./db/queries');
 
@@ -68,6 +69,66 @@ io.on('connection', function (socket) {
                 check.passCount = count;
                 socket.emit('login-check', check);
             });
+    });
+    
+    function getWins(username) {
+        connection
+            .sync()
+            .then(function () {
+                Game
+                    .findAll({
+                        attributes: ['result', 'createdAt', 'updatedAt', 'idLooser.name'],
+                        include: [{
+                            model: Player,
+                            as: 'idWinner',
+                            where: {
+                                name: username
+                            }
+                        }, {
+                            model: Player,
+                            as: 'idLooser',
+                        }],
+                        raw: true,
+                        where:{
+                            result: true
+                        }
+                    })
+                    .then(function (wins) {
+                        socket.emit('show-st-wins',wins);
+                    })
+            });
+    }
+    function getFaults(username) {
+        connection
+            .sync()
+            .then(function () {
+                Game
+                    .findAll({
+                        attributes: ['result', 'createdAt', 'updatedAt', 'idWinner.name'],
+                        include: [{
+                            model: Player,
+                            as: 'idLooser',
+                            where: {
+                                name: username
+                            }
+                        }, {
+                            model: Player,
+                            as: 'idWinner',
+                        }],
+                        raw: true,
+                        where:{
+                            result: true
+                        }
+                    })
+                    .then(function (faults) {
+                        socket.emit('show-st-faults',faults);
+                    })
+            });
+    }
+
+    socket.on('get-statistics',function (username) {
+        getWins(username);
+        getFaults(username);
     });
 
     socket.on('login', function (userId) {

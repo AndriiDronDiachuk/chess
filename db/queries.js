@@ -60,6 +60,7 @@ function saveGameResult(msg) {
                                     }
                                 )
                                 .then(function (res) {
+                                    console.log(res.dataValues.id);
                                     let condition = res.dataValues.id;
                                     Game
                                         .update({
