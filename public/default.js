@@ -26,9 +26,9 @@
     });
 
     socket.on('resign', function (msg) {
-        if (msg.gameId == serverGame.id) {
-            $('#play').attr('disabled', false);
-            $('#play').attr('value', 'Играть');
+        if (msg.gameId === serverGame.id) {
+            $('#play').attr('disabled', false).attr('value', 'Играть');
+            //$('#play').attr('value', 'Играть');
             $('#page-game').hide();
             $('input[type=radio]').attr('disabled', false);
             $('#page-lobby').show();
@@ -41,7 +41,6 @@
     });
 
     socket.on('joingame', function (msg) {
-        console.log("joined as game id: " + msg.game.id);
         playerColor = msg.color;
         initGame(msg.game);
         $('#page-lobby').hide();
@@ -113,10 +112,13 @@
     }
 
     function showStatistics(statistics) {
-        switch (statistics[statistics.length - 1]){
-            case 'Победа': $('#wins-amount').text(statistics.length-1); break;
-            case 'Поражение': $('#fails-amount').text(statistics.length-1); break;
-            case 'Пат': $('#stalemate-amount').text(statistics.length-1); break;
+        switch (statistics[statistics.length - 1]) {
+            case 'Победа':
+                $('#wins-amount').text(statistics.length - 1); break;
+            case 'Поражение':
+                $('#fails-amount').text(statistics.length - 1); break;
+            case 'Пат':
+                $('#stalemate-amount').text(statistics.length - 1); break;
         }
         for (let i = 0; i < statistics.length - 1; i++) {
             $('.statistics-table').append(
@@ -147,11 +149,10 @@
     });
 
     function createNewUserForDb() {
-        let newUser = {
+        return {
             name: $('#username').val(),
             password: $('#password').val()
         };
-        return newUser;
     }
 
     $('#play').on('click', function () {
@@ -164,8 +165,8 @@
             username = username + ' -Б';
         }
         $('input[type=radio]').attr('disabled', true);
-        $('#play').attr('value', 'Вы в очереди');
-        $('#play').attr('disabled', true);
+        $('#play').attr('value', 'Вы в очереди').attr('disabled', true);
+        //$('#play').attr('disabled', true);
         $('#page-lobby').show();
         $('#userList').show();
         socket.emit('login', username);
@@ -188,8 +189,7 @@
     });
 
     $('#game-resign').on('click', function () {
-        $('#play').attr('disabled', false);
-        $('#play').attr('value', 'Играть');
+        $('#play').attr('disabled', false).attr('value', 'Играть');
         $('#page-game').hide();
         $('input[type=radio]').attr('disabled', false);
         $('#page-lobby').show();
@@ -198,7 +198,6 @@
         clearGamesList();
         clearLog();
         clearCaptured();
-        alert(username);
         socket.emit('resign', {userId: username, gameId: serverGame.id});
     });
 
@@ -217,11 +216,11 @@
     };
 
     let clearGamesList = function () {
-        document.getElementById('gamesList').innerHTML = '';
+        $('#gamesList').empty();
     };
 
     let updateGamesList = function () {
-        document.getElementById('gamesList').innerHTML = '';
+        $('#gamesList').empty();
         myGames.forEach(function (game) {
             $('#gamesList').append($('<button>')
                 .text('#' + game)
@@ -233,7 +232,7 @@
     };
 
     let updateUserList = function () {
-        document.getElementById('userList').innerHTML = '';
+        $('#userList').empty();
         usersOnline.forEach(function (user) {
             $('#userList').append($('<button>')
                 .text(user)
@@ -269,7 +268,6 @@
             return false;
         }
     };
-
 
     let onDrop = function (source, target) {
 
@@ -358,7 +356,7 @@
                 msgConvert.flags = 'Ход';
                 break; // a non-capture
             case 'p':
-                mscConvert.flags = 'Повышение';
+                msgConvert.flags = 'Повышение';
                 break;  // a pawn promotion
             case 'e': //an en passant capture
             case 'c':
@@ -418,49 +416,35 @@
     }
 
     function showLog(msgConvert) {
-        $('#logs').append(
-            '<table class="dynamic">' +
-            '<tr>' +
-            '<th class="wide-th">' + msgConvert.dateTimeConvert + '</th>' +
-            '<th class="just-th">' + msgConvert.color + '</th>' +
-            '<th class="just-th">' + msgConvert.piece + '</th>' +
-            '<th class="just-th">' + msgConvert.from + ' -> ' + msgConvert.to + '</th>' +
-            '<th class="wide-th">' + msgConvert.flags + ' ' +
+        $('#logs-table').append(
+            '<tr><th>' + msgConvert.dateTimeConvert + '</th>' +
+            '<th>' + msgConvert.color + '</th>' +
+            '<th>' + msgConvert.piece + '</th>' +
+            '<th>' + msgConvert.from + ' -> ' + msgConvert.to + '</th>' +
+            '<th>' + msgConvert.flags + ' ' +
             msgConvert.captured + ' ' +
             msgConvert.isCheck + ' ' +
-            msgConvert.isCheckMate + '</th>' +
-            '</tr>' +
-            '</table>'
+            msgConvert.isCheckMate + '</th></tr>'
         );
     }
 
     function clearLog() {
-        $('#logs').empty();
-        $('#logs').append(
-            '<table class="dynamic">' +
-            '<tr>' +
-            '<th class="wide-th">Время</th>' +
+        $('#logs-table').empty().append(
+            '<tr><th class="wide-th">Время</th>' +
             '<th class="just-th">Цвет</th>' +
             '<th class="just-th">Фигура</th>' +
             '<th class="just-th">Координаты хода</th>' +
-            '<th class="wide-th">Действие</th>' +
-            '</tr>' +
-            '</table>'
+            '<th class="wide-th">Действие</th></tr>'
         );
     }
 
     function clearCaptured() {
-        $('#wins').empty();
-        $('#fails').empty();
-        $('#fails').append('<p>Сбитые белые:</p>');
-        $('#wins').append('<p>Сбитые черные:</p>');
+        $('#wins').empty().append('<p>Сбитые белые:</p>');
+        $('#fails').empty().append('<p>Сбитые черные:</p>');
     }
 
     function isCaptured(move) {
-        if (move.captured !== '') {
-            return true;
-        }
-        return false;
+        return move.captured !== '';
     }
 
     function showCaptured(move) {
