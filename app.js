@@ -163,13 +163,12 @@ io.on('connection', function (socket) {
         let userColor = socket.userId.substr(-1);
         let opponentColor = socket.opponentId.substr(-1);
         if (userColor !== opponentColor) {
-            let firstGamer;
-            let secondGamer;
+            let firstGamer, secondGamer;
             if (userColor === 'Б') {
                 firstGamer = socket.userId;
                 secondGamer = socket.opponentId;
             }
-            else if (userColor === 'Ч') {
+            else {
                 firstGamer = socket.opponentId;
                 secondGamer = socket.userId;
             }
@@ -231,9 +230,6 @@ io.on('connection', function (socket) {
     socket.on('move', function (msg) {
 
         if(msg.move.isCheckMate || msg.move.isStalemate){
-            let result;
-            if(msg.move.isCheckMate) result = true;
-            else result = false;
 
             if(socket.userId===users[activeGames[msg.gameId].users.white].userId)
             {
@@ -246,7 +242,7 @@ io.on('connection', function (socket) {
             queries.saveGameResult({
                 winnerId:socket.userId.slice(0,-3),
                 looserId:socket.opponentId.slice(0,-3),
-                result:result
+                result:msg.move.isCheckMate
             });
 
             delete users[activeGames[msg.gameId].users.white].games[msg.gameId];

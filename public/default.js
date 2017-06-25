@@ -84,7 +84,7 @@
                     $('#page-lobby').show();
                     $('#page-main').show();
 
-                    socket.emit('get-statistics',username);
+                    socket.emit('get-statistics', username);
                 }
             }
             else {
@@ -97,38 +97,42 @@
     });
 
     function setTimeDuration(statistics) {
-        for(let i=0;i<statistics.length-1;i++){
+        for (let i = 0; i < statistics.length - 1; i++) {
             let tempTime = Date.parse(statistics[i].updatedAt) - Date.parse(statistics[i].createdAt);
-            tempTime = new Date(tempTime - (3*60*60*1000));
+            statistics[i].createdAt = new Date(Date.parse(statistics[i].createdAt));
+            tempTime = new Date(tempTime - (3 * 60 * 60 * 1000));
             let options = {
                 hour: 'numeric',
                 minute: 'numeric',
                 second: 'numeric'
             };
-            tempTime = tempTime.toLocaleString('ru',options);
+            tempTime = tempTime.toLocaleString('ru', options);
             statistics[i].timeDuration = tempTime;
         }
         return statistics;
     }
 
     function showStatistics(statistics) {
-        for(let i =0;i<statistics.length-1;i++) {
-            $('.statistics').append(
-                '<tr>' +
-                '<td>' + statistics[i].name + '</td>' +
+        switch (statistics[statistics.length - 1]){
+            case 'Победа': $('#wins-amount').text(statistics.length-1); break;
+            case 'Поражение': $('#fails-amount').text(statistics.length-1); break;
+            case 'Пат': $('#stalemate-amount').text(statistics.length-1); break;
+        }
+        for (let i = 0; i < statistics.length - 1; i++) {
+            $('.statistics-table').append(
+                '<tr><td>' + statistics[i].name + '</td>' +
                 '<td>' + statistics[i].createdAt + '</td>' +
                 '<td>' + statistics[i].timeDuration + '</td>' +
-                '<td>' + statistics[statistics.length-1] + '</td>' +
-                '</tr>');
+                '<td>' + statistics[statistics.length - 1] + '</td></tr>');
         }
     }
 
-    socket.on('show-st-wins',function (statistics) {
+    socket.on('show-st-wins', function (statistics) {
         statistics.push('Победа');
         let extendedStatistics = setTimeDuration(statistics);
         showStatistics(extendedStatistics);
     });
-    socket.on('show-st-faults',function (statistics) {
+    socket.on('show-st-faults', function (statistics) {
         statistics.push('Поражение');
         let extendedStatistics = setTimeDuration(statistics);
         showStatistics(extendedStatistics);
@@ -194,6 +198,7 @@
         clearGamesList();
         clearLog();
         clearCaptured();
+        alert(username);
         socket.emit('resign', {userId: username, gameId: serverGame.id});
     });
 

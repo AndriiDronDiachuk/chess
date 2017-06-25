@@ -35,10 +35,17 @@ body {
     display: none;
 }
 
+#statistics{
+    width: 60%;
+}
+
+#game{
+    width: 34%;
+}
+
 .part-of-page-main {
     display: inline-block;
     border-style: hidden;
-    width: 47%;
     margin: 3pt;
     border-radius: 10px;
     background-color: aliceblue;
@@ -106,3 +113,9 @@ body {
     position: relative;
     left: 27%;
 }
+
+/*
+.amount{
+    height: 12pt;
+    width: 15pt;
+}*/
