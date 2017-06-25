@@ -70,61 +70,6 @@ io.on('connection', function (socket) {
                 socket.emit('login-check', check);
             });
     });
-    
-    function getWins(username) {
-        connection
-            .sync()
-            .then(function () {
-                Game
-                    .findAll({
-                        attributes: ['result', 'createdAt', 'updatedAt', 'idLooser.name'],
-                        include: [{
-                            model: Player,
-                            as: 'idWinner',
-                            where: {
-                                name: username
-                            }
-                        }, {
-                            model: Player,
-                            as: 'idLooser',
-                        }],
-                        raw: true,
-                        where:{
-                            result: true
-                        }
-                    })
-                    .then(function (wins) {
-                        socket.emit('show-st-wins',wins);
-                    })
-            });
-    }
-    function getFaults(username) {
-        connection
-            .sync()
-            .then(function () {
-                Game
-                    .findAll({
-                        attributes: ['result', 'createdAt', 'updatedAt', 'idWinner.name'],
-                        include: [{
-                            model: Player,
-                            as: 'idLooser',
-                            where: {
-                                name: username
-                            }
-                        }, {
-                            model: Player,
-                            as: 'idWinner',
-                        }],
-                        raw: true,
-                        where:{
-                            result: true
-                        }
-                    })
-                    .then(function (faults) {
-                        socket.emit('show-st-faults',faults);
-                    })
-            });
-    }
 
     socket.on('get-statistics',function (username) {
         getWins(username);
@@ -134,28 +79,6 @@ io.on('connection', function (socket) {
     socket.on('login', function (userId) {
         doLogin(socket, userId);
     });
-
-    function doLogin(socket, userId) {
-        socket.userId = userId;
-
-        if (!users[userId]) {
-            console.log('creating new user');
-            users[userId] = {userId: socket.userId, games: {}};
-        } else {
-            console.log('user found!');
-            Object.keys(users[userId].games).forEach(function (gameId) {
-                console.log('gameid - ' + gameId);
-            });
-        }
-
-        socket.emit('login', {
-            users: Object.keys(lobbyUsers),
-            games: Object.keys(users[userId].games)
-        });
-        lobbyUsers[userId] = socket;
-
-        socket.broadcast.emit('joinlobby', socket.userId);
-    }
 
     socket.on('invite', function (opponentId) {
         console.log('got an invite from: ' + socket.userId + ' --> ' + opponentId);
@@ -301,4 +224,82 @@ io.on('connection', function (socket) {
             gameId: socket.gameId
         });
     });
+
+    function doLogin(socket, userId) {
+        socket.userId = userId;
+
+        if (!users[userId]) {
+            console.log('creating new user');
+            users[userId] = {userId: socket.userId, games: {}};
+        } else {
+            console.log('user found!');
+            Object.keys(users[userId].games).forEach(function (gameId) {
+                console.log('gameid - ' + gameId);
+            });
+        }
+
+        socket.emit('login', {
+            users: Object.keys(lobbyUsers),
+            games: Object.keys(users[userId].games)
+        });
+        lobbyUsers[userId] = socket;
+
+        socket.broadcast.emit('joinlobby', socket.userId);
+    }
+
+    function getWins(username) {
+        connection
+            .sync()
+            .then(function () {
+                Game
+                    .findAll({
+                        attributes: ['result', 'createdAt', 'updatedAt', 'idLooser.name'],
+                        include: [{
+                            model: Player,
+                            as: 'idWinner',
+                            where: {
+                                name: username
+                            }
+                        }, {
+                            model: Player,
+                            as: 'idLooser',
+                        }],
+                        raw: true,
+                        where:{
+                            result: true
+                        }
+                    })
+                    .then(function (wins) {
+                        socket.emit('show-st-wins',wins);
+                    })
+            });
+    }
+
+    function getFaults(username) {
+        connection
+            .sync()
+            .then(function () {
+                Game
+                    .findAll({
+                        attributes: ['result', 'createdAt', 'updatedAt', 'idWinner.name'],
+                        include: [{
+                            model: Player,
+                            as: 'idLooser',
+                            where: {
+                                name: username
+                            }
+                        }, {
+                            model: Player,
+                            as: 'idWinner',
+                        }],
+                        raw: true,
+                        where:{
+                            result: true
+                        }
+                    })
+                    .then(function (faults) {
+                        socket.emit('show-st-faults',faults);
+                    })
+            });
+    }
 });
