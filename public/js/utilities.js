@@ -2,6 +2,39 @@
  * Created by andrii on 25.06.17.
  */
 
+let objConvert = {
+    colorObj: {w: 'Белый', b: 'Черный'},
+    isCheckObj: {true: 'Шах', false: ''},
+    isCheckMateObj: {true: 'Мат', false: ''},
+    isStalemateObj: {true: 'Пат', false: ''},
+    flagsObj: {
+        b: 'Ход',
+        n: 'Ход',
+        p: 'Повышение',
+        e: 'Бой',
+        c: 'Бой',
+        k: 'Рокировка от короля',
+        q: 'Рокировка от королевы'
+    },
+    pieceObj: {
+        b: 'Слоник',
+        k: 'Король',
+        n: 'Конь',
+        p: 'Пешка',
+        q: 'Королева',
+        r: 'Тура'
+    }
+};
+
+let dataTimeOptions = {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric'
+};
+
 function addUser(userId) {
     usersOnline.push(userId);
     updateUserList();
@@ -45,114 +78,55 @@ function isCaptured(move) {
 
 function convertLog(move) {
     let dateTime = new Date();
-    let options = {
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: 'numeric',
-        second: 'numeric'
-    };
-    let dateTimeConvert = dateTime.toLocaleString('ru', options);
+    let dateTimeConvert = dateTime.toLocaleString('ru', dataTimeOptions);
     let msgConvert = {
         dateTime: dateTime,
         dateTimeConvert: dateTimeConvert,
         from: move.from,
         to: move.to
     };
-    switch (move.color) {
-        case 'w':
-            msgConvert.color = 'Белый';
-            break;
-        case 'b':
-            msgConvert.color = 'Черный';
-            break;
+
+    for (let key in objConvert.colorObj) {
+        if (move.color === key) {
+            msgConvert.color = objConvert.colorObj[key];
+        }
     }
-    switch (move.isCheck) {
-        case true:
-            msgConvert.isCheck = 'Шах';
-            break;
-        case false:
-            msgConvert.isCheck = '';
-            break;
+
+    for (let key in objConvert.isCheckObj) {
+        if (move.isCheck.toString() === key) {
+            msgConvert.isCheck = objConvert.isCheckObj[key];
+        }
     }
-    switch (move.isCheckMate) {
-        case true:
-            msgConvert.isCheckMate = 'Мат';
-            break;
-        case false:
-            msgConvert.isCheckMate = '';
-            break;
+
+    for (let key in objConvert.isCheckMateObj) {
+        if (move.isCheckMate.toString() === key) {
+            msgConvert.isCheckMate = objConvert.isCheckMateObj[key];
+        }
     }
-    switch (move.isStalemate) {
-        case true:
-            msgConvert.isStalemate = 'Пат';
-            break;
-        case false:
-            msgConvert.isStalemate = '';
-            break;
+
+    for (let key in objConvert.isStalemateObj) {
+        if (move.isStalemate.toString() === key) {
+            msgConvert.isStalemate = objConvert.isStalemateObj[key];
+        }
     }
-    switch (move.flags) {
-        case 'b': //a pawn push of two squares
-        case 'n':
-            msgConvert.flags = 'Ход';
-            break; // a non-capture
-        case 'p':
-            msgConvert.flags = 'Повышение';
-            break;  // a pawn promotion
-        case 'e': //an en passant capture
-        case 'c':
-            msgConvert.flags = 'Бой';
-            break; // standard capture
-        case 'k':
-            msgConvert.flags = 'Рокировка от короля';
-            break;
-        case 'q':
-            msgConvert.flags = 'Рокировка от королевы';
-            break;
+
+    for (let key in objConvert.flagsObj) {
+        if (move.flags === key) {
+            msgConvert.flags = objConvert.flagsObj[key];
+        }
     }
-    switch (move.piece) {
-        case 'b':
-            msgConvert.piece = 'Слоник';
-            break;
-        case 'k':
-            msgConvert.piece = 'Король';
-            break;
-        case 'n':
-            msgConvert.piece = 'Конь';
-            break;
-        case 'p':
-            msgConvert.piece = 'Пешка';
-            break;
-        case 'q':
-            msgConvert.piece = 'Королева';
-            break;
-        case 'r':
-            msgConvert.piece = 'Тура';
-            break;
-    }
-    switch (move.captured) {
-        case undefined:
+
+    for (let key in objConvert.pieceObj) {
+        if (move.piece === key) {
+            msgConvert.piece = objConvert.pieceObj[key];
+        }
+        if (move.captured === key) {
+            msgConvert.captured = objConvert.pieceObj[key];
+        }
+        if (move.captured === undefined) {
             msgConvert.captured = '';
-            break;
-        case 'b':
-            msgConvert.captured = 'Слоник';
-            break;
-        case 'k':
-            msgConvert.captured = 'Король';
-            break;
-        case 'n':
-            msgConvert.captured = 'Конь';
-            break;
-        case 'p':
-            msgConvert.captured = 'Пешка';
-            break;
-        case 'q':
-            msgConvert.captured = 'Королева';
-            break;
-        case 'r':
-            msgConvert.captured = 'Тура';
-            break;
+        }
     }
+
     return msgConvert;
 }
