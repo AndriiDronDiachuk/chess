@@ -66,7 +66,7 @@ function saveGameResult(msg) {
                                         .update({
                                                 idOfFirstPlayer: winnerId,
                                                 idOfSecondPlayer: looserId,
-                                                result: true
+                                                result: msg.result
                                             },
                                             {where: {id: condition}})
                                 })

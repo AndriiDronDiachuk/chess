@@ -44,20 +44,12 @@ function clearCaptured() {
 }
 
 function showStatistics(statistics) {
-    switch (statistics[statistics.length - 1]) {
-        case 'Победа':
-            $('#wins-amount').text(statistics.length - 1); break;
-        case 'Поражение':
-            $('#fails-amount').text(statistics.length - 1); break;
-        case 'Пат':
-            $('#stalemate-amount').text(statistics.length - 1); break;
-    }
-    for (let i = 0; i < statistics.length - 1; i++) {
+    for (let i = 0; i < statistics.length; i++) {
         $('.statistics-table').append(
             '<tr><td>' + statistics[i].name + '</td>' +
             '<td>' + statistics[i].createdAt + '</td>' +
             '<td>' + statistics[i].timeDuration + '</td>' +
-            '<td>' + statistics[statistics.length - 1] + '</td></tr>'
+            '<td>' + statistics[i].result + '</td></tr>'
         );
     }
 }

@@ -101,14 +101,33 @@ socket.on('color-err', function () {
 });
 
 socket.on('show-st-wins', function (statistics) {
-    statistics.push('Победа');
+    for(let i=0;i<statistics.length;i++){
+        if(statistics[i].result===true){
+            statistics[i].result = 'Победа';
+        }
+        else{
+            statistics[i].result = 'Пат';
+        }
+    }
     let extendedStatistics = setTimeDuration(statistics);
     showStatistics(extendedStatistics);
 });
 socket.on('show-st-faults', function (statistics) {
-    statistics.push('Поражение');
+    for(let i=0;i<statistics.length;i++){
+        if(statistics[i].result===true){
+            statistics[i].result = 'Поражение';
+        }
+        else{
+            statistics[i].result = 'Пат';
+        }
+    }
     let extendedStatistics = setTimeDuration(statistics);
     showStatistics(extendedStatistics);
+});
+
+socket.on('stalemate', function (user) {
+    let answer = confirm(user + ' предложил ничю');
+    if (answer) socket.emit('resign', {userId: username, gameId: serverGame.id, gameRes: false})
 });
 
 $('#sign-up').on('click', function () {
@@ -152,14 +171,9 @@ $('#game-back').on('click', function () {
 });
 
 $('#game-resign').on('click', function () {
-    $('#play').attr('disabled', false).attr('value', 'Играть');
-    $('#page-game').hide();
-    $('input[type=radio]').attr('disabled', false);
-    $('#page-lobby').show();
-    $('#userList').hide();
-    $('#page-main').show();
-    clearGamesList();
-    clearLog();
-    clearCaptured();
-    socket.emit('resign', {userId: username, gameId: serverGame.id});
+    socket.emit('resign', {userId: username, gameId: serverGame.id, gameRes: true});
+});
+
+$('#game-stalemate').on('click', function () {
+    socket.emit('game-stalemate', username);
 });

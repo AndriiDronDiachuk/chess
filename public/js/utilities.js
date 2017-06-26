@@ -24,7 +24,7 @@ function createNewUserForDb() {
 }
 
 function setTimeDuration(statistics) {
-    for (let i = 0; i < statistics.length - 1; i++) {
+    for (let i = 0; i < statistics.length; i++) {
         let tempTime = Date.parse(statistics[i].updatedAt) - Date.parse(statistics[i].createdAt);
         statistics[i].createdAt = new Date(Date.parse(statistics[i].createdAt));
         tempTime = new Date(tempTime - (3 * 60 * 60 * 1000));

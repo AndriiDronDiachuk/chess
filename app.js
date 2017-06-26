@@ -74,6 +74,7 @@ io.on('connection', function (socket) {
     socket.on('get-statistics',function (username) {
         getWins(username);
         getFaults(username);
+        //getStalemates(username);
     });
 
     socket.on('login', function (userId) {
@@ -153,6 +154,10 @@ io.on('connection', function (socket) {
     socket.on('move', function (msg) {
 
         if(msg.move.isCheckMate || msg.move.isStalemate){
+            let res;
+            if(msg.move.isCheckMate) res = true;
+            if(msg.move.isStalemate) res = false;
+            else res = null;
 
             if(socket.userId===users[activeGames[msg.gameId].users.white].userId)
             {
@@ -165,7 +170,7 @@ io.on('connection', function (socket) {
             queries.saveGameResult({
                 winnerId:socket.userId.slice(0,-3),
                 looserId:socket.opponentId.slice(0,-3),
-                result:msg.move.isCheckMate
+                result:res
             });
 
             delete users[activeGames[msg.gameId].users.white].games[msg.gameId];
@@ -198,7 +203,7 @@ io.on('connection', function (socket) {
         queries.saveGameResult({
             winnerId: socket.opponentId.slice(0, -3),
             looserId: msg.userId,
-            result: true
+            result: msg.gameRes
         });
 
         delete users[activeGames[msg.gameId].users.white].games[msg.gameId];
@@ -206,6 +211,7 @@ io.on('connection', function (socket) {
         delete activeGames[msg.gameId];
 
         socket.broadcast.emit('resign', msg);
+        socket.emit('resign',msg);
     });
 
     socket.on('disconnect', function (msg) {
@@ -223,6 +229,11 @@ io.on('connection', function (socket) {
             userId: socket.userId,
             gameId: socket.gameId
         });
+    });
+
+    socket.on('game-stalemate',function (username) {
+
+        socket.broadcast.emit('stalemate', username);
     });
 
     function doLogin(socket, userId) {
@@ -265,12 +276,10 @@ io.on('connection', function (socket) {
                             as: 'idLooser',
                         }],
                         raw: true,
-                        where:{
-                            result: true
-                        }
+
                     })
                     .then(function (wins) {
-                        socket.emit('show-st-wins',wins);
+                        socket.emit('show-st-wins', wins);
                     })
             });
     }
@@ -293,12 +302,46 @@ io.on('connection', function (socket) {
                             as: 'idWinner',
                         }],
                         raw: true,
-                        where:{
-                            result: true
-                        }
                     })
                     .then(function (faults) {
                         socket.emit('show-st-faults',faults);
+                    })
+            });
+    }
+
+    function getStalemates(username) {
+        connection
+            .sync()
+            .then(function () {
+                Game
+                    .findAll({
+                        attributes: ['result', 'createdAt', 'updatedAt', 'idWinner.name'],
+                        include: [{
+                            model: Player,
+                            as: 'idLooser',
+                            where: {
+                                name: username
+                            }
+                        }],
+                        include: [{
+                            model: Player,
+                            as: 'idWinner',
+
+                        }],
+                        raw: true,
+                        where:{
+                            result: false
+                        }
+                    })
+                    .then(function (stalemates) {
+
+                        for(let i = 0;i<stalemates.length;i++){
+                            if(stalemates[i].name === username){
+                                stalemates[i].name = stalemates[i]['idWinner.name'];
+                            }
+                        }
+                        //socket.emit('show-st-faults',faults);
+                        console.log(stalemates);
                     })
             });
     }
