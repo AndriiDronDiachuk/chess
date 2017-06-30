@@ -21,7 +21,7 @@ app.get('/', function (req, res) {
     res.sendFile(__dirname + '/public/default.html');
 });
 
-http.listen(2000, function () {
+http.listen((process.env.PORT || 2000), function () {
     console.log('Server started on port 2000.');
 });
 
