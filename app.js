@@ -22,7 +22,7 @@ app.get('/', function (req, res) {
 });
 
 http.listen((process.env.PORT || 2000), function () {
-    console.log('Server started on port 2000.');
+    console.log('Server started on port',process.env.PORT || 2000);
 });
 
 io.on('connection', function (socket) {
