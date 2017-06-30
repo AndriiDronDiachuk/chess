@@ -15,7 +15,7 @@ const localConnection = new Sequelize('chessdb', 'postgres', '1111', {
     dialect: 'postgres'
 });
 
-const connection = webConnection || localConnection;
+const connection = localConnection || webConnection;
 /*connection.sync({
     force: true
 });*/

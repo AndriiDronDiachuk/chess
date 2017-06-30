@@ -44,6 +44,8 @@ function clearCaptured() {
 }
 
 function showStatistics(statistics) {
+    let winsAmount = 0, failsAmount = 0,patsAmount = 0;
+
     for (let i = 0; i < statistics.length; i++) {
         $('.statistics-table').append(
             '<tr><td>' + statistics[i].name + '</td>' +
@@ -51,5 +53,15 @@ function showStatistics(statistics) {
             '<td>' + statistics[i].timeDuration + '</td>' +
             '<td>' + statistics[i].result + '</td></tr>'
         );
+        if(statistics[i].result==='Победа'){
+            winsAmount++;
+        }
+        if(statistics[i].result==='Поражение'){
+            failsAmount++;
+        }
+        else patsAmount++;
     }
+    $('#wins-amount').text(winsAmount);
+    $('#fails-amount').text(failsAmount);
+    $('#stalemate-amount').text(patsAmount);
 }
