@@ -5,11 +5,7 @@ const Sequelize = require('sequelize');
 
 //var web_config = process.env.DATABASE_URL;
 
-const webConnection = new Sequelize('d28q1qpcbvrn73', 'btrhekrtdobvqb', '273bf4f1340c9a3c15afecc3c58690eda6e3bc1f29fd1a29e7ecdf949d693633', {
-    host: 'ec2-54-75-229-201.eu-west-1.compute.amazonaws.com',
-    port: 5432,
-    dialect: 'postgres'
-});
+const webConnection = process.env.DATABASE_URL;
 
 const localConnection = new Sequelize('chessdb', 'postgres', '1111', {
     host: 'localhost',
@@ -17,7 +13,7 @@ const localConnection = new Sequelize('chessdb', 'postgres', '1111', {
     dialect: 'postgres'
 });
 
-const connection = localConnection || webConnection;
+const connection = webConnection;
 /*connection.sync({
     force: true
 });*/
